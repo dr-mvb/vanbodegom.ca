@@ -1,0 +1,22 @@
+H1 { font-size: 4em; } 
+p { font-size: 1.5em; }
+/*What to put in:make top heading right and jusited*/
+/*font*/html{font-family:"Times New Roman",Times,serif;}
+@media print { 
+  #coordbox::before {
+    content:" N 43  16.403 W 080 2"/*5.857*/;
+    color:red;
+    font-size:2em;
+  }
+  #coordbox::after {
+    content: /*W 080  8*/"1.021 ";
+    color:red;
+    font-size:2em;
+  }
+}
+/*justify*/
+h1
+{
+text-align:left;
+text-justify:inter-word;
+}
