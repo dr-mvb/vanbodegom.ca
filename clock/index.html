@@ -40,6 +40,7 @@ var time = document.getElementById("time");
 var date = new Date;
 
 function updateTime() {
+  date = new Date;
   time.innerHTML = date.getHours() + ":" + date.getMinutes().toLocaleString('en-US', {minimumIntegerDigits: 2});
 }
 
