@@ -17,7 +17,7 @@ body {
 }
 
 #time {
-  display: flex;
+  display: none;
   background-color: black;
 }
 
@@ -54,7 +54,7 @@ body.onclick = function () {
   //time.webkitRequestFullscreen();
   time.style.display = "flex";
   shown = setTimeout(function () {
-    time.style.display = "flex";
+    time.style.display = "none";
     shown = false;
   }, 5000);
 }
