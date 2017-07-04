@@ -51,7 +51,7 @@ body.onclick = function () {
     clearTimeout(shown);
   }
   updateTime();
-  time.webkitRequestFullscreen();
+  //time.webkitRequestFullscreen();
   time.style.display = "flex";
   shown = setTimeout(function () {
     time.style.display = "none";
@@ -61,11 +61,11 @@ body.onclick = function () {
 
 body.addEventListener("touchstart", function () {
   body.onclick();
-  time.webkitRequestFullscreen();
+  //time.webkitRequestFullscreen();
 }, false); 
 body.addEventListener("touchmove", function () {
   body.onclick();
-  time.webkitRequestFullscreen();
+  //time.webkitRequestFullscreen();
 }, false); 
     </script>
   </body>
