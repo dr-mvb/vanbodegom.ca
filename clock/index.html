@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Clock</title>
+    <style>
+@import url('https://fonts.googleapis.com/css?family=Poppins');
+
+body {
+  background-color: black;
+  color: #454545;
+  font-family: 'Poppins', sans-serif;
+  font-size: 28vw;
+  width: 100%;
+  height: 100%;
+  background-attachment: fixed;
+}
+
+#time {
+  display: none;
+  background-color: black;
+}
+
+#fill {
+  height:100vh;
+}
+
+#filltop {
+  height: 10vh;
+}
+    </style>
+  </head>
+  <body>
+    <div id="filltop"></div>
+    <div style="justify-content:center;align-items:center;" id="time">Loading</div>
+    <div id="fill"></div>
+    <script>
+var body = document.getElementsByTagName("body")[0];
+var time = document.getElementById("time");
+var date = new Date;
+
+function updateTime() {
+  time.innerHTML = date.getHours() + ":" + date.getMinutes().toLocaleString('en-US', {minimumIntegerDigits: 2});
+}
+
+setInterval(function () {
+  updateTime();
+}, 10000);
+updateTime();
+var shown = false;
+body.onclick = function () {
+  if (shown) {
+    clearTimeout(shown);
+  }
+  updateTime();
+  time.webkitRequestFullscreen();
+  time.style.display = "flex";
+  shown = setTimeout(function () {
+    time.style.display = "none";
+    shown = false;
+  }, 5000);
+}
+
+body.addEventListener("touchstart", function () {
+  body.onclick();
+  time.webkitRequestFullscreen();
+}, false); 
+body.addEventListener("touchmove", function () {
+  body.onclick();
+  time.webkitRequestFullscreen();
+}, false); 
+    </script>
+  </body>
+</html>
