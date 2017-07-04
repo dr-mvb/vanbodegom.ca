@@ -43,9 +43,6 @@ function updateTime() {
   time.innerHTML = date.getHours() + ":" + date.getMinutes().toLocaleString('en-US', {minimumIntegerDigits: 2});
 }
 
-setInterval(function () {
-  updateTime();
-}, 10000);
 updateTime();
 var shown = false;
 body.onclick = function () {
