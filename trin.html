@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Trinomial Factorer</title>
+    <script>
+      var factors = number => Array
+        .from(Array(number + 1), (_, i) => i)
+        .filter(i => number % i === 0);
+      
+      var factorsAndOther = (n, exNegs) => {
+        if (n === 0) return [[0, 0]]; // technically wrong but IDK :P
+        
+        let f = factors(Math.abs(n)).map(x => [x, n/x]);
+        if (!exNegs) {
+          f.forEach(list => f.push([-list[0], -list[1]]));
+        }
+        return f;
+      };
+      
+      var n2s = n => { if (n < 0) { return n.toString(); } else { return `+${n}`; } }
+      
+      function findTri(alp, bet, del, v) {
+        if (!v) v = "x";
+        let exclNegs = false;//alp > 0 && bet > 0 && del > 0;
+        let alpFactors = factorsAndOther(alp, exclNegs);
+        let ret = { matrix: null, tried: [], valids: [] };
+        let delFactors = factorsAndOther(del, exclNegs);
+        for (let i = 0; i < alpFactors.length; i++) {
+          let alpF = alpFactors[i];
+          for (let j = 0; j < delFactors.length; j++) {
+            let delF = delFactors[j];
+            let sum = (alpF[0] * delF[0]) + (alpF[1] * delF[1]);
+            let valid = sum === bet;
+            let matrix = [...alpF, ...delF];
+            ret.tried.push({
+              alpF,
+              delF,
+              sum,
+              valid,
+              matrix,
+              str: `(${matrix[1] === 1 ? "" : matrix[1]}${v}${n2s(matrix[2])})(${matrix[0] === 1 ? "" : matrix[0]}${v}${n2s(matrix[3])})`
+            });
+          }
+        }
+        return ret;
+      }
+      
+      function updatePage() {
+        let alp = parseInt(document.getElementById("alp-i").value, 10);
+        let bet = parseInt(document.getElementById("bet-i").value, 10);
+        let del = parseInt(document.getElementById("del-i").value, 10);
+        if (isNaN(alp) || isNaN(bet) || isNaN(del)) {
+          document.getElementById("results-div").innerText = "";
+          return;
+        }
+        let data = findTri(alp, bet, del, "x");
+        if (!data) {
+          document.getElementById("results-div").innerHTML = `
+            <span class="no-tri">That trinomial couldn't be factored.</span>
+          `;
+          return;
+        }
+        let valids = data.tried
+          .filter(tr => tr.valid)
+          .map(tr => `<li>${tr.str}</li>`);
+          
+        let tried = data.tried.map(tr => `
+          <li>
+            <span style="color: ${tr.valid ? "green; font-weight: bold;": "red;"}">${tr.str}</span><br>
+            <table>
+              <tr>
+                <td>${tr.matrix[0]}</td>
+                <td>${tr.matrix[2]}</td>
+              </tr>
+              <tr>
+                <td>${tr.matrix[1]}</td>
+                <td>${tr.matrix[3]}</td>
+              </tr>
+            </table>
+          </li>
+        `);
+        document.getElementById("results-div").innerHTML = `
+          I found ${valids.length} valid solutions:
+          <ul>
+            ${valids.join("")}
+          </ul>
+          <div>
+            Here are all ${tried.length} solutions I tried:
+            <ul>
+              ${tried.join("")}
+            </ul>
+          </div>
+        `;
+      }
+      onload = () => {
+        document.getElementById("alp-i").addEventListener("input", updatePage);
+        document.getElementById("bet-i").addEventListener("input", updatePage);
+        document.getElementById("del-i").addEventListener("input", updatePage);
+      };
+    </script>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      input {
+        width: 4em;
+      }
+      h2 {
+        margin-top: 0;
+        margin-bottom: 0.1rem;
+      }
+      .no-tri {
+        color: gray;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Smitty's mediocre trinomial factorer</h1>
+    <div style="margin-bottom: 1rem;">
+      Enter a trinomial: <input type="number" placeholder="3" id="alp-i">x<sup>2</sup> + <input type="number" placeholder="5" id="bet-i">x + <input type="number" placeholder="24" id="del-i">
+    </div>
+    <hr>
+    <h2>Results</h2>
+    <div id="results-div">
+    </div>
+  </body>
+</html>
