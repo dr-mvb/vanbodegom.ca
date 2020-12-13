@@ -271,7 +271,7 @@
             }
 
             onload = async () => {
-                let stagesIdx = [0,1,2,3,4,5];
+                let stagesIdx = [0,0,0,1,1,2,3,4,4,5,5];
                 if (location.hash) {
                     const num = parseInt(location.hash.slice(1));
                     if (!Number.isNaN(num) && num >= 0 && num <= 5) stagesIdx = [num];
@@ -283,11 +283,11 @@
                     location.hash = `#_${stagesIdx[i]}_`;
                     scores.push(await doStage(stagesIdx[i], score));
                     const avg = scores.reduce((sum, cur) => sum + cur, 0) / stagesIdx.length;
-                    score = Math.ceil(Math.pow(avg, 0.7) * 1000);
+                    score = Math.ceil(avg * 1000);
                 }
                 console.log(scores);
                 localStorage["smitest/score/" + Date.now()] = score;
-                document.getElementById("instr").innerHTML = `Your score: ${score}. <a href=".">Try again?</a><div id="hist"><a href="/hist.html">view score history</a></div>`;
+                document.getElementById("instr").innerHTML = `Your score: ${score}. <a href=".">Try again?</a><div id="hist"><a href="hist.html">view score history</a></div>`;
                 document.getElementById("instr").classList.add("over");
             };
         </script>
