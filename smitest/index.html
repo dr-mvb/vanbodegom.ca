@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Smitest</title>
+        <style>
+            body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                margin: 0;
+                padding: 0;
+            }
+            #instr {
+                padding-top: calc(50vh - 8rem);
+                text-align: center;
+                font-size: 4rem;
+            }
+            #instr:after {
+                content: "Press space to start";
+                font-size: 2.5rem;
+                color: rgb(110, 110, 110);
+                display: block;
+            }
+            #instr.intask:after, #instr.over:after {
+                display: none;
+            }
+            #instr.intask {
+                font-family: monospace;
+            }
+            .word {
+                cursor: pointer;
+            }
+            .digit {
+                display: none;
+                font-size: 4rem;
+                font-family: monospace;
+                position: absolute;
+            }
+            #score {
+                font-size: 2rem;
+                color: rgb(80, 80, 80);
+            }
+            #hist {
+                font-size: 2rem;
+            }
+        </style>
+        <script>
+            const stages = [
+                {
+                    task: "Press the spacebar again as soon as the page turns blue.",
+                    exec: () => {
+                        return new Promise(async (resolve, reject) => {
+                            let set = -1;
+                            const tHandle = setTimeout(() => {
+                                set = performance.now();
+                                document.body.style.backgroundColor = "blue";
+                            }, 4000 + Math.random() * 2500);
+                            const listen = e => {
+                                if (event.code === "Space") {
+                                    let now = performance.now();
+                                    clearTimeout(tHandle);
+                                    window.removeEventListener("keydown", listen);
+                                    document.body.style.backgroundColor = "white";
+                                    if (set === -1) return resolve(0);
+                                    return resolve(1 - (Math.min(now - set, 5000) / 5000));
+                                }
+                            };
+                            window.addEventListener("keydown", listen);
+                        });
+                    }
+                },
+                {
+                    task: "Press the letter as soon as you see it on the screen.",
+                    exec: () => {
+                        return new Promise(async (resolve, reject) => {
+                            let set = -1;
+                            const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+                            const tHandle = setTimeout(() => {
+                                set = performance.now();
+                                document.getElementById("instr").textContent = letter;
+                            }, 4000 + Math.random() * 2500);
+                            const listen = e => {
+                                let now = performance.now();
+                                clearTimeout(tHandle);
+                                window.removeEventListener("keydown", listen);
+                                if (event.key.toUpperCase() === letter) {
+                                    if (set === -1) return resolve(0); // correctly guessed, no points
+                                    return resolve(1 - (Math.min(now - set, 10000) / 10000));
+                                } else {
+                                    return resolve(0); // too early
+                                }
+                            };
+                            window.addEventListener("keydown", listen);
+                        });
+                    }
+                },
+                {
+                    task: "Click on the word named \"blue\".",
+                    exec: () => {
+                        return new Promise(async (resolve, reject) => {
+                            const words = [
+                                "red", "green", "purple", "black", "magenta", "cyan"
+                            ];
+                            const wordsHtml = 
+                                words.map(word => `<span class="word otherword" style="color: ${Math.random() < 0.33 ? "blue" : words[Math.floor(Math.random() * words.length)]}" class="word">${word}</span>`)
+                                    .concat([`<span style='color: ${words[Math.floor(Math.random() * words.length)]}' class='word' id='blueword'>blue</span>`]);
+                            shuffle(wordsHtml)
+                            const html = wordsHtml.join(" ");
+                            setTimeout(() => {
+                                let set = performance.now();
+                                document.getElementById("instr").innerHTML = html;
+                                document.getElementById("blueword").onclick = () => {
+                                    let now = performance.now();
+                                    return resolve(1 - (Math.min(now - set, 11000) / 11000));
+                                };
+                                [...document.getElementsByClassName("otherword")].forEach(ele => {
+                                    ele.onclick = () => {
+                                        return resolve(0);
+                                    }
+                                });
+                            }, 2000 + Math.random() * 1000);
+                        });
+                    }
+                },
+                {
+                    task: "Type the digit that doesn't appear",
+                    exec: () => {
+                        let digits = [0,1,2,3,4,5,6,7,8,9];
+                        let removed = Math.floor(Math.random() * 10);
+                        digits.splice(removed, 1);
+                        shuffle(digits);
+                        let start = -1;
+                        const intervalHandle = setInterval(() => {
+                            const digit = digits.pop();
+                            if (digit === undefined) {
+                                start = performance.now();
+                                clearInterval(intervalHandle);
+                                return;
+                            }
+                            const ele = document.getElementById("digit" + digit);
+                            ele.style.top = `${Math.random() * window.innerHeight * 0.8}px`;
+                            ele.style.left = `${Math.random() * window.innerWidth * 0.8}px`;
+                            ele.style.display = "block";
+                            ele.style.color = "black";
+                        }, 0);
+                        return new Promise((resolve, reject) => {
+                            const listener = e => {
+                                const now = performance.now();
+                                const num = parseInt(e.key, 10);
+                                if (Number.isNaN(num)) return;
+                                window.removeEventListener("keydown", listener);
+                                clearInterval(intervalHandle);
+                                [...document.getElementsByClassName("digit")].forEach(ele => ele.style.display = "none");
+                                if (num !== removed) return resolve(0);
+                                if (start === -1) return resolve(1); // guessed early
+                                return resolve(1 - (Math.min(now - start, 15000) / 15000));
+                            };
+                            window.addEventListener("keydown", listener);
+                        });
+                    }
+                },
+                {
+                    task: "Type the answer",
+                    exec: () => {
+                        let start = -1;
+                        const e1 = Math.floor(Math.random() * 6);
+                        const e2 = Math.floor(Math.random() * 6);
+                        let ans;
+                        let q;
+                        if (Math.random() > 0.5) {
+                            ans = e1 + e2;
+                            q = `${e1} + ${e2}`;
+                        } else {
+                            let bigger = Math.max(e1, e2);
+                            let smaller = Math.min(e1, e2);
+                            ans = bigger - smaller;
+                            q = `${bigger} - ${smaller}`;
+                        }
+                        if (ans >= 10) {
+                            ans = 7;
+                            q = "7 + 2";
+                        } 
+                        const timeoutHandle = setTimeout(() => {
+                            start = performance.now();
+                            document.getElementById("instr").textContent = q;
+                        }, 1000 + Math.random() * 1000);
+                        return new Promise((resolve, reject) => {
+                            const listener = e => {
+                                const now = performance.now();
+                                const num = parseInt(e.key, 10);
+                                if (Number.isNaN(num)) return;
+                                window.removeEventListener("keydown", listener);
+                                clearTimeout(timeoutHandle);
+                                if (num !== ans) return resolve(0);
+                                if (start === -1) return resolve(1); // guessed early
+                                return resolve(1 - (Math.min(now - start, 7500) / 7500));
+                            };
+                            window.addEventListener("keydown", listener);
+                        });
+                    }
+                },
+                {
+                    task: "Enter the number of blue digits",
+                    exec: () => {
+                        let digits = [0,1,2,3,4,5,6,7,8,9];
+                        shuffle(digits);
+                        const cut = Math.floor(Math.random() * 8);
+                        let start = -1;
+                        let idx = 0;
+                        const intervalHandle = setInterval(() => {
+                            const digit = digits[idx++];
+                            if (digit === undefined) {
+                                start = performance.now();
+                                clearInterval(intervalHandle);
+                                return;
+                            }
+                            const ele = document.getElementById("digit" + digit);
+                            ele.style.top = `${Math.random() * window.innerHeight * 0.8}px`;
+                            ele.style.left = `${Math.random() * window.innerWidth * 0.8}px`;
+                            ele.style.display = "block";
+                            if (digits.indexOf(digit) < cut) {
+                                ele.style.color = "blue";
+                            } else {
+                                ele.style.color = "black";
+                            }
+                        }, 75 + Math.random() * 75);
+                        return new Promise((resolve, reject) => {
+                            const listener = e => {
+                                const now = performance.now();
+                                const num = parseInt(e.key, 10);
+                                if (Number.isNaN(num)) return;
+                                window.removeEventListener("keydown", listener);
+                                clearInterval(intervalHandle);
+                                [...document.getElementsByClassName("digit")].forEach(ele => ele.style.display = "none");
+                                if (num !== cut) return resolve(0);
+                                if (start === -1) return resolve(1); // guessed early
+                                return resolve(1 - (Math.min(now - start, 8000) / 8000));
+                            };
+                            window.addEventListener("keydown", listener);
+                        });
+                    }
+                }
+            ];
+            function doStage(n, curScore) {
+                return new Promise((resolve, reject) => {
+                    console.log("doing", n)
+                    document.getElementById("instr").innerHTML = `<div id="score">score: ${curScore}</div>${stages[n].task}`;
+                    async function listen() {
+                        if (event.code === "Space") {
+                            console.log("execing", n);
+                            window.removeEventListener("keydown", listen);
+                            document.getElementById("instr").classList.add("intask");
+                            document.getElementById("instr").textContent = "";
+                            const score = await stages[n].exec();
+                            document.getElementById("instr").classList.remove("intask");
+                            resolve(score);
+                        }
+                    }
+                    window.addEventListener("keydown", listen);
+                });
+            }
+
+            // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    let j = Math.floor(Math.random() * (i + 1));
+                    let temp = array[i];
+                    array[i] = array[j];
+                    array[j] = temp;
+                }
+            }
+
+            onload = async () => {
+                let stagesIdx = [0,1,2,3,4,5];
+                if (location.hash) {
+                    const num = parseInt(location.hash.slice(1));
+                    if (!Number.isNaN(num) && num >= 0 && num <= 5) stagesIdx = [num];
+                }
+                shuffle(stagesIdx);
+                let scores = [];
+                let score = 0;
+                for (let i = 0; i < stagesIdx.length; i++) {
+                    location.hash = `#_${stagesIdx[i]}_`;
+                    scores.push(await doStage(stagesIdx[i], score));
+                    const avg = scores.reduce((sum, cur) => sum + cur, 0) / stagesIdx.length;
+                    score = Math.ceil(Math.pow(avg, 0.7) * 1000);
+                }
+                console.log(scores);
+                localStorage["smitest/score/" + Date.now()] = score;
+                document.getElementById("instr").innerHTML = `Your score: ${score}. <a href=".">Try again?</a><div id="hist"><a href="/hist.html">view score history</a></div>`;
+                document.getElementById("instr").classList.add("over");
+            };
+        </script>
+    </head>
+    <body>
+        <div id="instr">
+            Loading
+        </div>
+        <div id="digits">
+            <span class="digit" id="digit0">0</span>
+            <span class="digit" id="digit1">1</span>
+            <span class="digit" id="digit2">2</span>
+            <span class="digit" id="digit3">3</span>
+            <span class="digit" id="digit4">4</span>
+            <span class="digit" id="digit5">5</span>
+            <span class="digit" id="digit6">6</span>
+            <span class="digit" id="digit7">7</span>
+            <span class="digit" id="digit8">8</span>
+            <span class="digit" id="digit9">9</span>
+        </div>
+    </body>
+</html>
